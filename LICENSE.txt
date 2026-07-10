@@ -1,0 +1,13 @@
+All Rights Reserved / Binary Distribution Notice
+
+Copyright (c) 2026
+
+This repository is prepared for public distribution of the Windows binary package and related documentation.
+
+Unless a separate license is explicitly provided by the copyright holder, the software binary is not licensed as open-source software.
+
+You may download and use the released binary for personal use. Redistribution, modification, reverse engineering, or commercial distribution is not granted by this notice unless separately permitted by the copyright holder.
+
+The documentation files in this repository may be copied for the purpose of explaining, verifying, and using this release.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
