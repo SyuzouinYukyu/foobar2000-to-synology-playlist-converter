@@ -76,6 +76,17 @@ Get-FileHash -Algorithm SHA256 .\foobar2000_to_Synology_Playlist_Converter_v1.1.
 - EXEはコード署名されていません。Windows SmartScreen が警告を出す場合があります。
 - セキュリティソフトによる検査結果は環境により異なります。利用前に各自の環境でスキャンしてください。
 
+## 開発・動作確認環境
+
+本ツールは、以下の環境を主な想定環境として開発・確認しています。
+
+- スマートフォンアプリ: BubbleUPnP 有償版
+- NAS: Synology DiskStation DS224+
+- アンプ / ネットワークプレーヤー: Marantz MODEL M1
+- 利用形態: Synology NAS上の音楽ライブラリを、UPnP / DLNA / OpenHome系の再生環境で扱う構成
+
+上記は開発者環境であり、すべてのNAS、再生アプリ、ネットワークプレーヤーでの動作を保証するものではありません。
+
 ## ライセンス
 
 このリポジトリに含まれる文書と配布物の扱いは [`LICENSE.txt`](LICENSE.txt) を確認してください。
