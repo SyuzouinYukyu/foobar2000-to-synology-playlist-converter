@@ -1,105 +1,97 @@
 # foobar2000 to Synology Playlist Converter
 
-foobar2000 で作成したプレイリストを、Synology NAS / UPnP / DLNA 環境で扱いやすい形式へ変換する Windows 向け GUI ツールです。
+foobar2000のWindows用プレイリストをSynology NAS向けへ変換し、逆方向にも変換できるWindows GUIツールです。
 
-本ツールは、Windows 上の foobar2000 プレイリストを NAS 側のパス体系へ合わせることを目的としています。特に、PC 上では再生できるが NAS / Synology 側ではパス解決できない `.m3u` / `.m3u8` プレイリストを整理する用途に向きます。
+## 最新版
 
-## 配布形式
+現在の公開ソース／配布版は **v1.1.5** です。
 
-- 配布版: `foobar2000_to_Synology_Playlist_Converter_v1.1.2.exe`
-- 対応OS: Windows 10 / Windows 11 64bit 想定
-- 形式: 単体EXE / GUIアプリ
+- 対応OS: Windows 10 / 11 64bit
+- 形式: win-x64、自己完結、単一EXE
 - インストール: 不要
+- .NETランタイムの別途導入: 不要
 
-> GitHub の通常リポジトリには 100MiB を超えるファイルを直接置けないため、EXE本体は **GitHub Releases の Assets** から配布してください。
+### 配布EXE
 
-## 主な用途
+| 項目 | 値 |
+|---|---|
+| ファイル名 | `foobar2000_to_Synology_Playlist_Converter_v1.1.5.exe` |
+| サイズ | `161,791,256 bytes` |
+| SHA-256 | `D11F847B9CAEFA27CA34E1D6682D2B7CFB1EEC3B47A6CDDDF477A3A91F4D9FCE` |
 
-- foobar2000 で作成したプレイリストを Synology NAS 向けに変換
-- Windows ローカルパスから NAS 基準パスへの置換
-- `.m3u` / `.m3u8` 系プレイリストの整理
-- 変換ログの確認
-- NAS 上の音楽ライブラリ運用補助
+EXEは100MiBを超えるため、通常のGitリポジトリには含めていません。配布する場合はGitHub ReleasesのAssetsを使用してください。
 
-## 基本的な使い方
+## v1.1.5の主な機能
 
-1. `foobar2000_to_Synology_Playlist_Converter_v1.1.2.exe` をダウンロードします。
-2. 任意の作業フォルダへ配置します。
-3. EXEを起動します。
-4. 変換元プレイリストを指定します。
-5. Windows 側の音源ルートと NAS 側の基準パスを指定します。
-6. 出力先を指定して変換します。
-7. 変換結果とログを確認します。
+- Windows → NAS: UTF-8（BOMなし）/ CRLF / `#EXTM3U`
+- NAS → Windows: CP932（Shift_JIS）/ CRLF / `#EXTM3U`
+- Windowsドライブ、UNCパス、Synology内部パスのマッピング
+- NAS上の最終配置先を基準にした相対パス生成
+- ファイル存在確認、詳細ログ、CSV
+- 高信頼候補だけを対象とする自動パス修復
+- `RESOLVED` / `AMBIGUOUS` / `MISSING` / `NOT_CHECKABLE`分類
+- 未解決行のコメントアウト
+- 原子的な出力とキャンセル時の一時ファイル清掃
+- ドラッグ＆ドロップ、設定保存、可変フォント
+- `--self-test`内蔵
 
-詳細は [`docs/USAGE.md`](docs/USAGE.md) を参照してください。
+## 自動修復の安全設計
 
-## NAS基準パスについて
+v1.1.5では、フォルダ改名の合意根拠を**正規化後のファイル名と拡張子が一致する曲**に限定しています。トラック番号だけの一致では修復しません。
 
-「NAS基準」には、Synology / UPnP / DLNA 側から見た音源ライブラリの基準パスを入力します。
+フォルダ対応は、最低3曲、80%以上、候補一意、競合なしの場合だけ登録します。また、アクセス拒否、I/O障害、UNC/NAS切断、キャンセルなどで走査が完了しなかったルートの索引は破棄され、そのルートでは自動修復を行いません。
 
-例:
-
-```text
-/volume1/music
-/volume1/AMZN_01
-/volume1/AMZN_02
-```
-
-Windows側のパス例:
+推奨設定:
 
 ```text
-G:\AMZN_01
-G:\AMZN_02
+パス修復                 : 高信頼候補のみ自動修復
+未解決行をコメントアウト : ON
 ```
 
-変換後は、Windows専用の `G:\...` 形式ではなく、NAS側で解釈しやすいパス形式へ寄せます。
+## 公開ソース
 
-## ハッシュ確認
+v1.1.5の公開ソースは次にあります。
 
-配布ファイルの SHA-256 は次の通りです。
+- [`source/v1.1.5`](source/v1.1.5/README.md)
+
+ソースZIPはGitHub上でBase64テキスト11分割として保存しており、付属のPowerShellスクリプトで復元できます。復元後はSHA-256を自動検証します。
+
+ソースZIPのSHA-256:
 
 ```text
-382ad84f1ce70c9d36af9bd37e37c08e0bf4390901b87dcf3c5d7245fdaf16d4  foobar2000_to_Synology_Playlist_Converter_v1.1.2.exe
+804ad909f1bce195db7a58eb039cb4e04e697fab64b90997095788f652b88a1f
 ```
 
-PowerShell で確認する場合:
+## SHA-256確認
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\foobar2000_to_Synology_Playlist_Converter_v1.1.2.exe
+Get-FileHash -Algorithm SHA256 .\foobar2000_to_Synology_Playlist_Converter_v1.1.5.exe
+```
+
+期待値:
+
+```text
+D11F847B9CAEFA27CA34E1D6682D2B7CFB1EEC3B47A6CDDDF477A3A91F4D9FCE
 ```
 
 ## 注意事項
 
-- 本ツールはプレイリスト変換支援ツールです。音源ファイル本体の移動・削除・変換を目的としたものではありません。
-- 初回利用時は、必ず小さなテスト用プレイリストで変換結果を確認してください。
-- 既存プレイリストは事前にバックアップしてください。
-- EXEはコード署名されていません。Windows SmartScreen が警告を出す場合があります。
-- セキュリティソフトによる検査結果は環境により異なります。利用前に各自の環境でスキャンしてください。
+- 音源ファイル本体は移動・改名・削除しません。
+- 初回は小規模なプレイリストで変換結果を確認してください。
+- 既存プレイリストを事前にバックアップしてください。
+- 初回運用では`RESOLVED`の旧パスと修復後パスを数件確認してください。
+- EXEはコード署名されていません。SmartScreen警告が出る場合があります。
+- ログをIssueへ添付する際は、個人名、非公開パス、NAS名、IPアドレス、資格情報を伏せてください。
 
 ## 開発・動作確認環境
 
-本ツールは、以下の環境を主な想定環境として開発・確認しています。
+- Synology DiskStation DS224+
+- BubbleUPnP
+- Marantz MODEL M1
+- Windows 11 x64
 
-- スマートフォンアプリ: BubbleUPnP 有償版
-- NAS: Synology DiskStation DS224+
-- アンプ / ネットワークプレーヤー: Marantz MODEL M1
-- 利用形態: Synology NAS上の音楽ライブラリを、UPnP / DLNA / OpenHome系の再生環境で扱う構成
-
-上記は開発者環境であり、すべてのNAS、再生アプリ、ネットワークプレーヤーでの動作を保証するものではありません。
+上記以外のNAS、再生アプリ、ネットワークプレーヤーでの動作を保証するものではありません。
 
 ## ライセンス
 
-このリポジトリに含まれる文書と配布物の扱いは [`LICENSE.txt`](LICENSE.txt) を確認してください。
-
-## サポート
-
-不具合報告時は、次の情報を添えて Issue を作成してください。
-
-- Windows のバージョン
-- ツールのバージョン
-- 変換元プレイリストの文字コード / 拡張子
-- Windows側の基準パス
-- NAS側の基準パス
-- 期待した出力
-- 実際の出力
-- 個人情報・非公開パスを伏せたログ
+利用条件は[`LICENSE.txt`](LICENSE.txt)を確認してください。
