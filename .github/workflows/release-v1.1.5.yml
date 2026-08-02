@@ -1,0 +1,176 @@
+name: Publish v1.1.5 Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/release-v1.1.5.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-v1.1.5
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    env:
+      TAG_NAME: v1.1.5
+      EXE_NAME: foobar2000_to_Synology_Playlist_Converter_v1.1.5.exe
+      SOURCE_ZIP_NAME: foobar2000_to_Synology_Playlist_Converter_v1.1.5_source.zip
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore verified source archive
+        shell: pwsh
+        run: |
+          & .\source\v1.1.5\Restore-SourceArchive.ps1
+          $zip = Join-Path $PWD "source\v1.1.5\$env:SOURCE_ZIP_NAME"
+          Expand-Archive -LiteralPath $zip -DestinationPath .\build-src -Force
+
+      - name: Publish single-file EXE
+        shell: pwsh
+        run: |
+          dotnet publish .\build-src\foobar2000_to_Synology_Playlist_Converter.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:DebugType=None `
+            -p:DebugSymbols=false `
+            -o .\publish
+
+          $exe = Join-Path $PWD "publish\$env:EXE_NAME"
+          if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) {
+            throw "Published EXE was not found: $exe"
+          }
+
+      - name: Run published EXE self-test
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD "publish\$env:EXE_NAME"
+          $output = @(& $exe --self-test 2>&1)
+          $exitCode = $LASTEXITCODE
+          $output | ForEach-Object { Write-Host $_ }
+          if ($exitCode -ne 0) {
+            throw "Self-test failed with exit code $exitCode."
+          }
+          if (($output -join "`n") -notmatch 'SELF_TEST_OK') {
+            throw 'SELF_TEST_OK was not emitted.'
+          }
+
+      - name: Generate checksums and release notes
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD "publish\$env:EXE_NAME"
+          $sourceZip = Join-Path $PWD "source\v1.1.5\$env:SOURCE_ZIP_NAME"
+          $exeHash = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash.ToUpperInvariant()
+          $sourceHash = (Get-FileHash -LiteralPath $sourceZip -Algorithm SHA256).Hash.ToUpperInvariant()
+          $exeSize = (Get-Item -LiteralPath $exe).Length
+
+          @"
+          $exeHash  $env:EXE_NAME
+          $sourceHash  $env:SOURCE_ZIP_NAME
+          "@.Trim() | Set-Content -LiteralPath .\SHA256SUMS-v1.1.5.txt -Encoding utf8
+
+          @"
+          # foobar2000 to Synology Playlist Converter v1.1.5
+
+          Windows用プレイリストとSynology NAS用プレイリストを双方向変換する単体GUIツールです。
+
+          ## v1.1.5の主な改善
+
+          - 高信頼候補だけを使用する自動パス修復
+          - トラック番号だけではフォルダ対応を確定しない誤修復防止
+          - 最低3曲・一致率80%以上・候補一意・競合なしのフォルダ合意
+          - 不完全な索引を破棄し、そのルートでの自動修復を全面停止
+          - 未解決行のコメントアウト
+          - 原子的出力とキャンセル時の一時ファイル清掃
+          - `--self-test`を公開EXEで実行し、`SELF_TEST_OK`を確認済み
+
+          ## 配布EXE
+
+          - ファイル: `$env:EXE_NAME`
+          - サイズ: `$exeSize bytes`
+          - SHA-256: `$exeHash`
+          - 形式: win-x64 / 自己完結 / 単一EXE
+          - コード署名: なし
+
+          ## 公開ソース
+
+          - ファイル: `$env:SOURCE_ZIP_NAME`
+          - SHA-256: `$sourceHash`
+
+          初回は小規模なプレイリストで結果を確認し、既存プレイリストをバックアップしてください。
+          "@ | Set-Content -LiteralPath .\release-notes-v1.1.5.md -Encoding utf8
+
+          "EXE_HASH=$exeHash" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "EXE_SIZE=$exeSize" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Create or update GitHub Release and mark Latest
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $exe = Join-Path $PWD "publish\$env:EXE_NAME"
+          $sourceZip = Join-Path $PWD "source\v1.1.5\$env:SOURCE_ZIP_NAME"
+
+          gh release view $env:TAG_NAME --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release edit $env:TAG_NAME `
+              --repo $env:GITHUB_REPOSITORY `
+              --title "foobar2000 to Synology Playlist Converter v1.1.5" `
+              --notes-file .\release-notes-v1.1.5.md `
+              --latest
+          }
+          else {
+            gh release create $env:TAG_NAME `
+              --repo $env:GITHUB_REPOSITORY `
+              --target $env:GITHUB_SHA `
+              --title "foobar2000 to Synology Playlist Converter v1.1.5" `
+              --notes-file .\release-notes-v1.1.5.md `
+              --latest
+          }
+
+          gh release upload $env:TAG_NAME `
+            $exe `
+            $sourceZip `
+            .\SHA256SUMS-v1.1.5.txt `
+            --repo $env:GITHUB_REPOSITORY `
+            --clobber
+
+      - name: Synchronize README and repository checksum
+        shell: pwsh
+        run: |
+          $readmePath = Join-Path $PWD 'README.md'
+          $readme = Get-Content -LiteralPath $readmePath -Raw
+          $readme = [regex]::Replace($readme, '(?m)^\| サイズ \| `[^`]+` \|$', "| サイズ | ``$env:EXE_SIZE bytes`` |")
+          $readme = [regex]::Replace($readme, '(?m)^\| SHA-256 \| `[0-9A-Fa-f]{64}` \|$', "| SHA-256 | ``$env:EXE_HASH`` |")
+          $readme = [regex]::Replace($readme, '(?m)^[0-9A-Fa-f]{64}(?=\r?$)', $env:EXE_HASH)
+          [IO.File]::WriteAllText($readmePath, $readme, [Text.UTF8Encoding]::new($false))
+
+          "$env:EXE_HASH  $env:EXE_NAME" | Set-Content -LiteralPath .\checksums\SHA256SUMS.txt -Encoding utf8
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add README.md checksums/SHA256SUMS.txt
+          if (-not (git diff --cached --quiet)) {
+            git commit -m 'Update v1.1.5 release checksum [skip ci]'
+            git push origin HEAD:main
+          }
