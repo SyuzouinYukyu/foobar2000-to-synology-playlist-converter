@@ -1,4 +1,4 @@
-# Retry with WinExe-aware self-test waiting and artifact upload.
+# Retry with local-build informational version semantics.
 name: Diagnose v1.1.8 Build
 
 on:
@@ -28,7 +28,7 @@ jobs:
       - name: Publish
         shell: pwsh
         run: |
-          dotnet publish .\build-src\foobar2000_to_Synology_Playlist_Converter.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -o .\publish
+          dotnet publish .\build-src\foobar2000_to_Synology_Playlist_Converter.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -p:IncludeSourceRevisionInInformationalVersion=false -o .\publish
           Get-FileHash -LiteralPath .\publish\foobar2000_to_Synology_Playlist_Converter_v1.1.8.exe -Algorithm SHA256
           (Get-Item .\publish\foobar2000_to_Synology_Playlist_Converter_v1.1.8.exe).Length
       - name: Upload diagnostic EXE
