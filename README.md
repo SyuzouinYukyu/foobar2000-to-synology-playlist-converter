@@ -1,13 +1,13 @@
 # foobar2000 to Synology Playlist Converter
 
-foobar2000のWindows用プレイリストをSynology NAS向けへ変換し、逆方向にも変換できるWindows GUIツールです。
+foobar2000で作成したWindows用プレイリストをSynology NAS向けへ変換し、逆方向にも変換できるWindows GUIツールです。
 
 ## 最新版
 
-現在の公開ソース／配布版は **v1.1.5** です。
+現在の公開版は **v1.1.8** です。
 
 - 対応OS: Windows 10 / 11 64bit
-- 形式: win-x64、自己完結、単一EXE
+- 形式: win-x64 / 自己完結 / 単一EXE
 - インストール: 不要
 - .NETランタイムの別途導入: 不要
 
@@ -15,31 +15,42 @@ foobar2000のWindows用プレイリストをSynology NAS向けへ変換し、逆
 
 | 項目 | 値 |
 |---|---|
-| ファイル名 | `foobar2000_to_Synology_Playlist_Converter_v1.1.5.exe` |
-| サイズ | `161,791,256 bytes` |
-| SHA-256 | `D11F847B9CAEFA27CA34E1D6682D2B7CFB1EEC3B47A6CDDDF477A3A91F4D9FCE` |
+| ファイル名 | `foobar2000_to_Synology_Playlist_Converter_v1.1.8.exe` |
+| サイズ | `161,832,216 bytes` |
+| SHA-256 | `553D7C2FAF1C31EF2D74F387BFB413762D507FFA40ADDBB37DCE2328E879E681` |
 
-EXEは100MiBを超えるため、通常のGitリポジトリには含めていません。配布する場合はGitHub ReleasesのAssetsを使用してください。
+EXEは100MiBを超えるため通常のGitリポジトリには含めていません。配布EXEはGitHub ReleasesのAssetsへ登録してください。
 
-## v1.1.5の主な機能
+## v1.1.8の主な更新点
+
+- パスマッピングに「全て有効」「全て無効」を追加
+- 「有効」チェックボックスを大型化し、高DPIへ追従
+- ユーザー可視の状態名・ログ表記を日本語化（例: `RESOLVED` → `解決済み`）
+- WinFormsレイアウトをリサイズ、DPI、フォント変更へ追従する構成へ改善
+- 表示フォントを12～36ptに対応し、既定値を14ptへ変更
+- 「設定保存」ボタンを廃止し、起動時自動読込・終了時自動保存へ統一
+- 設定のインポート / エクスポートを維持
+- `--self-test`を埋込みfixture方式へ変更し、単体EXEだけで自己テスト可能
+
+## 主な機能
 
 - Windows → NAS: UTF-8（BOMなし）/ CRLF / `#EXTM3U`
 - NAS → Windows: CP932（Shift_JIS）/ CRLF / `#EXTM3U`
 - Windowsドライブ、UNCパス、Synology内部パスのマッピング
 - NAS上の最終配置先を基準にした相対パス生成
-- ファイル存在確認、詳細ログ、CSV
-- 高信頼候補だけを対象とする自動パス修復
-- `RESOLVED` / `AMBIGUOUS` / `MISSING` / `NOT_CHECKABLE`分類
+- 高信頼候補のみを対象とする自動パス修復
+- `解決済み` / `候補複数` / `未発見` / `確認不能` の分類
 - 未解決行のコメントアウト
-- 原子的な出力とキャンセル時の一時ファイル清掃
-- ドラッグ＆ドロップ、設定保存、可変フォント
-- `--self-test`内蔵
+- 原子的なプレイリスト出力・設定保存
+- EXE同一ディレクトリへのポータブル設定保存
+- `<EXE directory>\logs`への詳細日本語ログ
+- ドラッグ＆ドロップ、CSVレポート、設定Import/Export
 
 ## 自動修復の安全設計
 
-v1.1.5では、フォルダ改名の合意根拠を**正規化後のファイル名と拡張子が一致する曲**に限定しています。トラック番号だけの一致では修復しません。
+フォルダ改名の合意根拠は、正規化後の**ファイル名と拡張子が一致する曲**に限定しています。トラック番号だけの一致では修復しません。
 
-フォルダ対応は、最低3曲、80%以上、候補一意、競合なしの場合だけ登録します。また、アクセス拒否、I/O障害、UNC/NAS切断、キャンセルなどで走査が完了しなかったルートの索引は破棄され、そのルートでは自動修復を行いません。
+フォルダ対応は、最低3曲・80%以上・候補一意・競合なしの場合だけ登録します。アクセス拒否、I/O障害、UNC/NAS切断、キャンセル等で走査が完了しなかったルートの索引は破棄し、そのルートでは自動修復を行いません。
 
 推奨設定:
 
@@ -50,45 +61,50 @@ v1.1.5では、フォルダ改名の合意根拠を**正規化後のファイル
 
 ## 公開ソース
 
-v1.1.5の公開ソースは次にあります。
+v1.1.8の公開ソース:
 
-- [`source/v1.1.5`](source/v1.1.5/README.md)
+- [`source/v1.1.8`](source/v1.1.8/README.md)
 
-ソースZIPはGitHub上でBase64テキスト11分割として保存しており、付属のPowerShellスクリプトで復元できます。復元後はSHA-256を自動検証します。
-
-ソースZIPのSHA-256:
+公開用ソースZIPのSHA-256:
 
 ```text
-804ad909f1bce195db7a58eb039cb4e04e697fab64b90997095788f652b88a1f
+77507A8BC6E697A089E08B751AF162A2170DBEE8A35454CF759E963A82FC0D7D
 ```
 
 ## SHA-256確認
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\foobar2000_to_Synology_Playlist_Converter_v1.1.5.exe
+Get-FileHash -Algorithm SHA256 .\foobar2000_to_Synology_Playlist_Converter_v1.1.8.exe
 ```
 
 期待値:
 
 ```text
-D11F847B9CAEFA27CA34E1D6682D2B7CFB1EEC3B47A6CDDDF477A3A91F4D9FCE
+553D7C2FAF1C31EF2D74F387BFB413762D507FFA40ADDBB37DCE2328E879E681
 ```
+
+## 自己テスト
+
+```powershell
+.\foobar2000_to_Synology_Playlist_Converter_v1.1.8.exe --self-test
+```
+
+正常終了時は `SELF_TEST_OK` が出力されます。
 
 ## 注意事項
 
 - 音源ファイル本体は移動・改名・削除しません。
 - 初回は小規模なプレイリストで変換結果を確認してください。
 - 既存プレイリストを事前にバックアップしてください。
-- 初回運用では`RESOLVED`の旧パスと修復後パスを数件確認してください。
 - EXEはコード署名されていません。SmartScreen警告が出る場合があります。
-- ログをIssueへ添付する際は、個人名、非公開パス、NAS名、IPアドレス、資格情報を伏せてください。
+- Issueへログを添付する際は、個人情報、非公開パス、NAS名、IPアドレス、資格情報を伏せてください。
 
 ## 開発・動作確認環境
 
+- Windows 11 x64
 - Synology DiskStation DS224+
 - BubbleUPnP
 - Marantz MODEL M1
-- Windows 11 x64
 
 上記以外のNAS、再生アプリ、ネットワークプレーヤーでの動作を保証するものではありません。
 
