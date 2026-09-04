@@ -23,5 +23,7 @@ v1.1.8では、UIの視認性・日本語化・リサイズ対応を中心に改
 
 ## 公開ソース
 
-- `source/v1.1.8/foobar2000_to_Synology_Playlist_Converter_v1.1.8_source.zip`
+公開用ソースは`source/v1.1.8`にあります。GitHub上ではソースZIPをBase64テキストへ分割して保存しており、同ディレクトリの`Restore-SourceArchive.ps1`を実行すると次のZIPを復元し、SHA-256を自動検証します。
+
+- 復元ファイル: `foobar2000_to_Synology_Playlist_Converter_v1.1.8_source.zip`
 - SHA-256: `77507A8BC6E697A089E08B751AF162A2170DBEE8A35454CF759E963A82FC0D7D`
