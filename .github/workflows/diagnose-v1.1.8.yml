@@ -1,3 +1,4 @@
+# Retry with WinExe-aware self-test waiting and artifact upload.
 name: Diagnose v1.1.8 Build
 
 on:
@@ -30,11 +31,6 @@ jobs:
           dotnet publish .\build-src\foobar2000_to_Synology_Playlist_Converter.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -o .\publish
           Get-FileHash -LiteralPath .\publish\foobar2000_to_Synology_Playlist_Converter_v1.1.8.exe -Algorithm SHA256
           (Get-Item .\publish\foobar2000_to_Synology_Playlist_Converter_v1.1.8.exe).Length
-      - name: Self-test
-        shell: pwsh
-        run: |
-          .\publish\foobar2000_to_Synology_Playlist_Converter_v1.1.8.exe --self-test
-          if ($LASTEXITCODE -ne 0) { throw "self-test failed: $LASTEXITCODE" }
       - name: Upload diagnostic EXE
         uses: actions/upload-artifact@v4
         with:
@@ -42,3 +38,16 @@ jobs:
           path: publish/foobar2000_to_Synology_Playlist_Converter_v1.1.8.exe
           compression-level: 0
           retention-days: 1
+      - name: Self-test
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD 'publish\foobar2000_to_Synology_Playlist_Converter_v1.1.8.exe'
+          $stdout = Join-Path $PWD 'self-test.stdout.txt'
+          $stderr = Join-Path $PWD 'self-test.stderr.txt'
+          $p = Start-Process -FilePath $exe -ArgumentList '--self-test' -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+          $out = Get-Content -LiteralPath $stdout -Raw -ErrorAction SilentlyContinue
+          $err = Get-Content -LiteralPath $stderr -Raw -ErrorAction SilentlyContinue
+          Write-Host $out
+          if ($p.ExitCode -ne 0) { throw "self-test failed: $($p.ExitCode)" }
+          if ($out -notmatch 'SELF_TEST_OK') { throw 'SELF_TEST_OK was not emitted.' }
+          if (-not [string]::IsNullOrWhiteSpace($err)) { throw "self-test stderr was not empty: $err" }
