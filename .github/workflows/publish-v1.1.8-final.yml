@@ -1,0 +1,75 @@
+name: Publish v1.1.8 Final
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/publish-v1.1.8-final.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      EXE: foobar2000_to_Synology_Playlist_Converter_v1.1.8.exe
+      SRC: foobar2000_to_Synology_Playlist_Converter_v1.1.8_source.zip
+      EXE_SHA: 553D7C2FAF1C31EF2D74F387BFB413762D507FFA40ADDBB37DCE2328E879E681
+      SRC_SHA: 77507A8BC6E697A089E08B751AF162A2170DBEE8A35454CF759E963A82FC0D7D
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore and verify source
+        shell: pwsh
+        run: |
+          & .\source\v1.1.8\Restore-SourceArchive.ps1
+          $src = Join-Path $PWD "source\v1.1.8\$env:SRC"
+          if ((Get-FileHash $src -Algorithm SHA256).Hash -ne $env:SRC_SHA) { throw 'Source SHA-256 mismatch.' }
+          Expand-Archive $src .\build-src -Force
+      - name: Build exact release EXE
+        shell: pwsh
+        run: |
+          dotnet publish .\build-src\foobar2000_to_Synology_Playlist_Converter.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -p:IncludeSourceRevisionInInformationalVersion=false -o .\publish
+          $exe = Join-Path $PWD "publish\$env:EXE"
+          if ((Get-Item $exe).Length -ne 161832216) { throw 'EXE size mismatch.' }
+          if ((Get-FileHash $exe -Algorithm SHA256).Hash -ne $env:EXE_SHA) { throw 'EXE SHA-256 mismatch.' }
+      - name: Self-test exact EXE
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD "publish\$env:EXE"
+          $out = Join-Path $PWD 'selftest.out'; $err = Join-Path $PWD 'selftest.err'
+          $p = Start-Process $exe -ArgumentList '--self-test' -Wait -PassThru -NoNewWindow -RedirectStandardOutput $out -RedirectStandardError $err
+          $stdout = Get-Content $out -Raw -ErrorAction SilentlyContinue
+          $stderr = Get-Content $err -Raw -ErrorAction SilentlyContinue
+          if ($p.ExitCode -ne 0 -or $stdout -notmatch 'SELF_TEST_OK' -or -not [string]::IsNullOrWhiteSpace($stderr)) { throw 'Self-test failed.' }
+      - name: Prepare checksums
+        shell: pwsh
+        run: |
+          @("$env:EXE_SHA  $env:EXE", "$env:SRC_SHA  $env:SRC") | Set-Content .\SHA256SUMS-v1.1.8.txt -Encoding utf8
+      - name: Publish Latest release and assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view v1.1.8 --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release edit v1.1.8 --repo $env:GITHUB_REPOSITORY --title 'foobar2000 to Synology Playlist Converter v1.1.8' --notes-file .\RELEASE_NOTES_v1.1.8.md --latest
+          } else {
+            gh release create v1.1.8 --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title 'foobar2000 to Synology Playlist Converter v1.1.8' --notes-file .\RELEASE_NOTES_v1.1.8.md --latest
+          }
+          gh release upload v1.1.8 ".\publish\$env:EXE" ".\source\v1.1.8\$env:SRC" .\SHA256SUMS-v1.1.8.txt --repo $env:GITHUB_REPOSITORY --clobber
+      - name: Verify published assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $r = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/v1.1.8" | ConvertFrom-Json
+          if ($r.draft -or $r.prerelease) { throw 'Release is not final.' }
+          $exe = @($r.assets) | Where-Object name -eq $env:EXE
+          $src = @($r.assets) | Where-Object name -eq $env:SRC
+          $sum = @($r.assets) | Where-Object name -eq 'SHA256SUMS-v1.1.8.txt'
+          if (-not $exe -or -not $src -or -not $sum) { throw 'Release asset missing.' }
+          if ($exe.size -ne 161832216 -or $exe.digest -ne ('sha256:' + $env:EXE_SHA.ToLowerInvariant())) { throw 'Published EXE verification failed.' }
+          if ($src.size -ne 69804 -or $src.digest -ne ('sha256:' + $env:SRC_SHA.ToLowerInvariant())) { throw 'Published source verification failed.' }
+          Write-Host RELEASE_OK
