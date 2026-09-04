@@ -1,10 +1,35 @@
 $ErrorActionPreference = 'Stop'
 
 $BaseDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
-$Parts = @(Get-ChildItem -LiteralPath $BaseDirectory -File -Filter 'source.zip.b64.part*' | Sort-Object Name)
+$ExpectedPartNames = @(
+    'source.zip.b64.part00',
+    'source.zip.b64.part01',
+    'source.zip.b64.part02',
+    'source.zip.b64.part03',
+    'source.zip.b64.part04a',
+    'source.zip.b64.part04b',
+    'source.zip.b64.part05a',
+    'source.zip.b64.part05b',
+    'source.zip.b64.part06',
+    'source.zip.b64.part07a',
+    'source.zip.b64.part07b',
+    'source.zip.b64.part08a',
+    'source.zip.b64.part08b',
+    'source.zip.b64.part09'
+)
 
-if ($Parts.Count -ne 12) {
-    throw "公開ソース分割ファイルは12個必要ですが、$($Parts.Count)個しか見つかりません。"
+$Parts = foreach ($Name in $ExpectedPartNames) {
+    $Path = Join-Path $BaseDirectory $Name
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        throw "公開ソース分割ファイルが不足しています: $Name"
+    }
+    Get-Item -LiteralPath $Path
+}
+
+$UnexpectedParts = @(Get-ChildItem -LiteralPath $BaseDirectory -File -Filter 'source.zip.b64.part*' |
+    Where-Object { $_.Name -notin $ExpectedPartNames })
+if ($UnexpectedParts.Count -gt 0) {
+    throw "想定外の公開ソース分割ファイルがあります: $($UnexpectedParts.Name -join ', ')"
 }
 
 $Base64 = ($Parts | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw }) -join ''
