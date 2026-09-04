@@ -1,3 +1,4 @@
+# Retry after completing and validating the v1.1.8 public source archive.
 name: Publish v1.1.8 Release
 
 on:
