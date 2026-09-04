@@ -3,8 +3,8 @@ $ErrorActionPreference = 'Stop'
 $BaseDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Parts = @(Get-ChildItem -LiteralPath $BaseDirectory -File -Filter 'source.zip.b64.part*' | Sort-Object Name)
 
-if ($Parts.Count -ne 10) {
-    throw "公開ソース分割ファイルは10個必要ですが、$($Parts.Count)個しか見つかりません。"
+if ($Parts.Count -ne 12) {
+    throw "公開ソース分割ファイルは12個必要ですが、$($Parts.Count)個しか見つかりません。"
 }
 
 $Base64 = ($Parts | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw }) -join ''
