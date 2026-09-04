@@ -6,9 +6,29 @@
 - `bin` / `obj` / `publish` / logs / settings / tmp等の生成物は除外
 - self-test用fixtureは`test_sample`として収録し、ビルド時にEXEへ埋込み
 
-## ソースZIP
+## ソースZIPの復元
 
-`foobar2000_to_Synology_Playlist_Converter_v1.1.8_source.zip`
+GitHub上ではソースZIPを12個のBase64テキストへ分割して保存しています。
+
+```text
+source.zip.b64.part00
+...
+source.zip.b64.part09
+```
+
+`part07`と`part08`はサイズ調整のため、それぞれ`a`/`b`の2ファイルに分割されています。
+
+このディレクトリで次を実行してください。
+
+```powershell
+.\Restore-SourceArchive.ps1
+```
+
+次のZIPが復元され、SHA-256も自動検証されます。
+
+```text
+foobar2000_to_Synology_Playlist_Converter_v1.1.8_source.zip
+```
 
 SHA-256:
 
@@ -17,6 +37,8 @@ SHA-256:
 ```
 
 ## ビルド
+
+復元したZIPを展開後、ソースディレクトリで実行します。
 
 ```powershell
 dotnet restore .\foobar2000_to_Synology_Playlist_Converter.sln
