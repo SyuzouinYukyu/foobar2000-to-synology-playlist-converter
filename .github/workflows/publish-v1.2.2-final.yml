@@ -40,6 +40,7 @@ jobs:
       - name: Verify manual
         shell: pwsh
         run: |
+          # .gitattributes preserves the manual's exact published bytes on Windows runners.
           $manual = Join-Path $PWD "docs\$env:MANUAL"
           if (-not (Test-Path -LiteralPath $manual -PathType Leaf)) { throw 'Manual is missing.' }
           if ((Get-FileHash $manual -Algorithm SHA256).Hash -ne $env:MANUAL_SHA) { throw 'Manual SHA-256 mismatch.' }
