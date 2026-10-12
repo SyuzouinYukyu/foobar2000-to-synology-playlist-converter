@@ -1,0 +1,110 @@
+name: Publish v1.2.2 Final
+
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/publish-v1.2.2-final.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      EXE: foobar2000_to_Synology_Playlist_Converter_v1.2.2.exe
+      SRC: foobar2000_to_Synology_Playlist_Converter_v1.2.2_source.zip
+      MANUAL: FTSPC_Manual.html
+      SUMS: SHA256SUMS-v1.2.2.txt
+      EXE_SHA: CB2877B1086041EBF552B93F26D42BE51E21D19AF007E1CACD0D6A3A3CD3AFE5
+      SRC_SHA: CE99702B3E166D62C7176657438972869629B0AB234C71AD3CBFE75C4270626A
+      MANUAL_SHA: D06C5AB2E7F095AB0689240C44DC8741730F778F45266F5DD634664AC03C994A
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.400
+
+      - name: Restore and verify source
+        shell: pwsh
+        run: |
+          & .\source\v1.2.2\Restore-SourceArchive.ps1
+          $src = Join-Path $PWD "source\v1.2.2\$env:SRC"
+          if ((Get-FileHash $src -Algorithm SHA256).Hash -ne $env:SRC_SHA) { throw 'Source SHA-256 mismatch.' }
+          Expand-Archive $src .\build-src -Force
+
+      - name: Verify manual
+        shell: pwsh
+        run: |
+          $manual = Join-Path $PWD "docs\$env:MANUAL"
+          if (-not (Test-Path -LiteralPath $manual -PathType Leaf)) { throw 'Manual is missing.' }
+          if ((Get-FileHash $manual -Algorithm SHA256).Hash -ne $env:MANUAL_SHA) { throw 'Manual SHA-256 mismatch.' }
+
+      - name: Build exact release EXE
+        shell: pwsh
+        run: |
+          dotnet publish .\build-src\foobar2000_to_Synology_Playlist_Converter.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -p:IncludeSourceRevisionInInformationalVersion=false -o .\publish
+          $exe = Join-Path $PWD "publish\$env:EXE"
+          if ((Get-Item $exe).Length -ne 162270488) { throw 'EXE size mismatch.' }
+          if ((Get-FileHash $exe -Algorithm SHA256).Hash -ne $env:EXE_SHA) { throw 'EXE SHA-256 mismatch.' }
+
+      - name: Self-test exact EXE
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD "publish\$env:EXE"
+          $out = Join-Path $PWD 'selftest.out'
+          $err = Join-Path $PWD 'selftest.err'
+          $p = Start-Process $exe -ArgumentList '--self-test' -Wait -PassThru -NoNewWindow -RedirectStandardOutput $out -RedirectStandardError $err
+          $stdout = Get-Content $out -Raw -ErrorAction SilentlyContinue
+          $stderr = Get-Content $err -Raw -ErrorAction SilentlyContinue
+          if ($p.ExitCode -ne 0 -or $stdout -notmatch '(?m)^SELF_TEST_OK\s*$' -or -not [string]::IsNullOrWhiteSpace($stderr)) { throw 'Self-test failed.' }
+
+      - name: Prepare checksums
+        shell: pwsh
+        run: |
+          @(
+            "$env:EXE_SHA  $env:EXE"
+            "$env:SRC_SHA  $env:SRC"
+            "$env:MANUAL_SHA  $env:MANUAL"
+          ) | Set-Content ".\$env:SUMS" -Encoding utf8
+
+      - name: Publish Latest release and assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view v1.2.2 --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release edit v1.2.2 --repo $env:GITHUB_REPOSITORY --title 'foobar2000 to Synology Playlist Converter v1.2.2' --notes-file .\RELEASE_NOTES_v1.2.2.md --latest
+          } else {
+            gh release create v1.2.2 --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title 'foobar2000 to Synology Playlist Converter v1.2.2' --notes-file .\RELEASE_NOTES_v1.2.2.md --latest
+          }
+          gh release upload v1.2.2 ".\publish\$env:EXE" ".\source\v1.2.2\$env:SRC" ".\docs\$env:MANUAL" ".\$env:SUMS" --repo $env:GITHUB_REPOSITORY --clobber
+
+      - name: Verify published assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $r = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/v1.2.2" | ConvertFrom-Json
+          $latest = gh api "repos/$env:GITHUB_REPOSITORY/releases/latest" | ConvertFrom-Json
+          if ($r.draft -or $r.prerelease -or $latest.tag_name -ne 'v1.2.2') { throw 'Release is not final/latest.' }
+          if (@($r.assets).Count -ne 4) { throw 'Unexpected release asset count.' }
+          $expected = @{
+            $env:EXE = @{ Size = 162270488; Digest = 'sha256:' + $env:EXE_SHA.ToLowerInvariant() }
+            $env:SRC = @{ Size = 1036649; Digest = 'sha256:' + $env:SRC_SHA.ToLowerInvariant() }
+            $env:MANUAL = @{ Size = 844329; Digest = 'sha256:' + $env:MANUAL_SHA.ToLowerInvariant() }
+            $env:SUMS = $null
+          }
+          foreach ($name in $expected.Keys) {
+            $asset = @($r.assets) | Where-Object name -eq $name
+            if (-not $asset) { throw "Release asset missing: $name" }
+            if ($expected[$name] -and ($asset.size -ne $expected[$name].Size -or $asset.digest -ne $expected[$name].Digest)) {
+              throw "Published asset verification failed: $name"
+            }
+          }
+          Write-Host RELEASE_OK

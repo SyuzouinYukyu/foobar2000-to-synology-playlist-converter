@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.2.2 - 2026-10-13
+
+- safe `../` relative M3U paths
+- NAS absolute paths and relative + absolute mixed paths
+- reverse conversion support for the new path forms
+- multiple playlist batch diagnosis/conversion and selected-row batch operations
+- forced conversion with unresolved-track skipping
+- improved diagnosis and settings persistence
+- `.m3u` / `.m3u8` extension preservation
+- overwrite-all within the current batch
+- quoted path normalization
+- diagnosis splitter position persistence
+- Synology DS224+、Synology Media Server、BubbleUPnP、Marantz MODEL M1による再生をユーザー環境で確認済み
+
 ## v1.1.8 - 2026-09-04
 
 ### UI / 操作性

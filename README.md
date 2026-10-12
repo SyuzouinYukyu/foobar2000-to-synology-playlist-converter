@@ -4,7 +4,10 @@ foobar2000で作成したWindows用プレイリストをSynology NAS向けへ変
 
 ## 最新版
 
-現在の公開版は **v1.1.8** です。
+現在の公開版は **v1.2.2** です。
+
+- [v1.2.2 Release](https://github.com/SyuzouinYukyu/foobar2000-to-synology-playlist-converter/releases/tag/v1.2.2)
+- [取扱説明書](docs/FTSPC_Manual.html)
 
 - 対応OS: Windows 10 / 11 64bit
 - 形式: win-x64 / 自己完結 / 単一EXE
@@ -15,27 +18,29 @@ foobar2000で作成したWindows用プレイリストをSynology NAS向けへ変
 
 | 項目 | 値 |
 |---|---|
-| ファイル名 | `foobar2000_to_Synology_Playlist_Converter_v1.1.8.exe` |
-| サイズ | `161,832,216 bytes` |
-| SHA-256 | `553D7C2FAF1C31EF2D74F387BFB413762D507FFA40ADDBB37DCE2328E879E681` |
+| ファイル名 | `foobar2000_to_Synology_Playlist_Converter_v1.2.2.exe` |
+| サイズ | `162,270,488 bytes` |
+| SHA-256 | `CB2877B1086041EBF552B93F26D42BE51E21D19AF007E1CACD0D6A3A3CD3AFE5` |
 
 EXEは100MiBを超えるため通常のGitリポジトリには含めていません。配布EXEはGitHub ReleasesのAssetsへ登録してください。
 
-## v1.1.8の主な更新点
+## v1.2.2の主な更新点
 
-- パスマッピングに「全て有効」「全て無効」を追加
-- 「有効」チェックボックスを大型化し、高DPIへ追従
-- ユーザー可視の状態名・ログ表記を日本語化（例: `RESOLVED` → `解決済み`）
-- WinFormsレイアウトをリサイズ、DPI、フォント変更へ追従する構成へ改善
-- 表示フォントを12～36ptに対応し、既定値を14ptへ変更
-- 「設定保存」ボタンを廃止し、起動時自動読込・終了時自動保存へ統一
-- 設定のインポート / エクスポートを維持
-- `--self-test`を埋込みfixture方式へ変更し、単体EXEだけで自己テスト可能
+- 安全性検証済みの `../` 相対M3Uパスに対応
+- NAS絶対パスと相対パスを同じM3U内で混在可能
+- NAS → Windows逆変換を新しいパス形式へ対応
+- 複数プレイリストの一括診断・一括変換と強制変換
+- `.m3u` / `.m3u8`の入力拡張子を維持
 
 ## 主な機能
 
 - Windows → NAS: UTF-8（BOMなし）/ CRLF / `#EXTM3U`
 - NAS → Windows: CP932（Shift_JIS）/ CRLF / `#EXTM3U`
+- `.m3u` / `.m3u8`対応
+- 複数プレイリストの選択行一括診断・一括変換
+- 未解決トラックを安全にスキップする強制変換
+- 安全な `../` 相対パス、NAS絶対パス、両形式の混在
+- `PathPair` / `PlaylistDestination` / `VisibilityRule`による設定
 - Windowsドライブ、UNCパス、Synology内部パスのマッピング
 - NAS上の最終配置先を基準にした相対パス生成
 - 高信頼候補のみを対象とする自動パス修復
@@ -61,32 +66,32 @@ EXEは100MiBを超えるため通常のGitリポジトリには含めていま�
 
 ## 公開ソース
 
-v1.1.8の公開ソース:
+v1.2.2の公開ソース:
 
-- [`source/v1.1.8`](source/v1.1.8/README.md)
+- [`source/v1.2.2`](source/v1.2.2/README.md)
 
 公開用ソースZIPのSHA-256:
 
 ```text
-77507A8BC6E697A089E08B751AF162A2170DBEE8A35454CF759E963A82FC0D7D
+CE99702B3E166D62C7176657438972869629B0AB234C71AD3CBFE75C4270626A
 ```
 
 ## SHA-256確認
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\foobar2000_to_Synology_Playlist_Converter_v1.1.8.exe
+Get-FileHash -Algorithm SHA256 .\foobar2000_to_Synology_Playlist_Converter_v1.2.2.exe
 ```
 
 期待値:
 
 ```text
-553D7C2FAF1C31EF2D74F387BFB413762D507FFA40ADDBB37DCE2328E879E681
+CB2877B1086041EBF552B93F26D42BE51E21D19AF007E1CACD0D6A3A3CD3AFE5
 ```
 
 ## 自己テスト
 
 ```powershell
-.\foobar2000_to_Synology_Playlist_Converter_v1.1.8.exe --self-test
+.\foobar2000_to_Synology_Playlist_Converter_v1.2.2.exe --self-test
 ```
 
 正常終了時は `SELF_TEST_OK` が出力されます。
