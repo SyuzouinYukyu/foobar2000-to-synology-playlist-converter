@@ -4,9 +4,9 @@ foobar2000で作成したWindows用プレイリストをSynology NAS向けへ変
 
 ## 最新版
 
-現在の公開版は **v1.2.2** です。
+現在の公開版は **v1.2.3** です。
 
-- [v1.2.2 Release](https://github.com/SyuzouinYukyu/foobar2000-to-synology-playlist-converter/releases/tag/v1.2.2)
+- [v1.2.3 Release](https://github.com/SyuzouinYukyu/foobar2000-to-synology-playlist-converter/releases/tag/v1.2.3)
 - [取扱説明書](docs/FTSPC_Manual.html)
 
 - 対応OS: Windows 10 / 11 64bit
@@ -18,19 +18,19 @@ foobar2000で作成したWindows用プレイリストをSynology NAS向けへ変
 
 | 項目 | 値 |
 |---|---|
-| ファイル名 | `foobar2000_to_Synology_Playlist_Converter_v1.2.2.exe` |
-| サイズ | `162,270,488 bytes` |
-| SHA-256 | `CB2877B1086041EBF552B93F26D42BE51E21D19AF007E1CACD0D6A3A3CD3AFE5` |
+| ファイル名 | `FTSPC_v1.2.3.exe` |
+| サイズ | `162,364,440 bytes` |
+| SHA-256 | `60D319078E87DB4179C93EB86CFF17EA9D19287D4E796C023ECA831F2662370F` |
 
 EXEは100MiBを超えるため通常のGitリポジトリには含めていません。配布EXEはGitHub ReleasesのAssetsへ登録してください。
 
-## v1.2.2の主な更新点
+## v1.2.3の主な更新点
 
-- 安全性検証済みの `../` 相対M3Uパスに対応
-- NAS絶対パスと相対パスを同じM3U内で混在可能
-- NAS → Windows逆変換を新しいパス形式へ対応
-- 複数プレイリストの一括診断・一括変換と強制変換
-- `.m3u` / `.m3u8`の入力拡張子を維持
+- 長時間処理の進捗（件数、割合、経過時間）とキャンセル中表示を改善
+- メインGUI全域で`.m3u` / `.m3u8`の複数ファイルD&Dに対応
+- 非対応ファイルやフォルダーのD&D時に日本語案内を表示
+- PathPairの逆変換優先表示を分かりやすく変更し、旧設定互換を維持
+- v1.2.2の相対/絶対パス、一括診断・変換、強制変換機能を維持
 
 ## 主な機能
 
@@ -66,32 +66,32 @@ EXEは100MiBを超えるため通常のGitリポジトリには含めていま�
 
 ## 公開ソース
 
-v1.2.2の公開ソース:
+v1.2.3の公開ソース:
 
-- [`source/v1.2.2`](source/v1.2.2/README.md)
+- [`source/v1.2.3`](source/v1.2.3/README.md)
 
 公開用ソースZIPのSHA-256:
 
 ```text
-CE99702B3E166D62C7176657438972869629B0AB234C71AD3CBFE75C4270626A
+A1E3C8472F872AEA195B55719A7A185063BEEBF4DDD217F15888E118F1A422FF
 ```
 
 ## SHA-256確認
 
 ```powershell
-Get-FileHash -Algorithm SHA256 .\foobar2000_to_Synology_Playlist_Converter_v1.2.2.exe
+Get-FileHash -Algorithm SHA256 .\FTSPC_v1.2.3.exe
 ```
 
 期待値:
 
 ```text
-CB2877B1086041EBF552B93F26D42BE51E21D19AF007E1CACD0D6A3A3CD3AFE5
+60D319078E87DB4179C93EB86CFF17EA9D19287D4E796C023ECA831F2662370F
 ```
 
 ## 自己テスト
 
 ```powershell
-.\foobar2000_to_Synology_Playlist_Converter_v1.2.2.exe --self-test
+.\FTSPC_v1.2.3.exe --self-test
 ```
 
 正常終了時は `SELF_TEST_OK` が出力されます。
